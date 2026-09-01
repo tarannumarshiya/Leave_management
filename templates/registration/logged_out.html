@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Logged Out - LeaveFlow{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 60vh;">
+    <div class="col-md-6 text-center">
+        <div class="card gradient-card border-0 p-5">
+            <div class="card-body">
+                <div class="d-inline-flex align-items-center justify-content-center bg-primary-gradient rounded-circle text-white mb-4" style="width: 70px; height: 70px; background: var(--primary-gradient);">
+                    <i class="bi bi-box-arrow-left fs-2"></i>
+                </div>
+                <h2 class="h3 mb-2">You Have Logged Out</h2>
+                <p class="text-muted mb-4">Thank you for using LeaveFlow. Your session has been securely closed.</p>
+                <a href="{% url 'login' %}" class="btn btn-gradient px-4 py-2" id="login-button">
+                    Log In Again
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

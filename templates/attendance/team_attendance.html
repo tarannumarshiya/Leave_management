@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - LeaveFlow{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">Team Attendance</h1>
+        <p class="text-muted mb-0">Monitor daily attendance and working hours for your department subordinates.</p>
+    </div>
+</div>
+
+<!-- Filters Card -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+    <div class="card-body p-4">
+        <form method="get" class="row g-3 align-items-end" id="team-attendance-filter-form">
+            <div class="col-md-3">
+                <label for="q" class="form-label font-semibold small text-uppercase">Search Subordinate</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" id="q" value="{{ q }}" class="form-control border-start-0 bg-light animate-all" placeholder="Search name or ID...">
+                </div>
+            </div>
+            
+            <div class="col-md-2.5">
+                <label for="start_date" class="form-label font-semibold small text-uppercase">Start Date</label>
+                <input type="date" name="start_date" id="start_date" value="{{ start_date }}" class="form-control bg-light">
+            </div>
+            
+            <div class="col-md-2.5">
+                <label for="end_date" class="form-label font-semibold small text-uppercase">End Date</label>
+                <input type="date" name="end_date" id="end_date" value="{{ end_date }}" class="form-control bg-light">
+            </div>
+
+            <div class="col-md-2">
+                <label for="status" class="form-label font-semibold small text-uppercase">Status</label>
+                <select name="status" id="status" class="form-select bg-light">
+                    <option value="">All Statuses</option>
+                    <option value="present" {% if status == 'present' %}selected{% endif %}>Present</option>
+                    <option value="absent" {% if status == 'absent' %}selected{% endif %}>Absent</option>
+                    <option value="half-day" {% if status == 'half-day' %}selected{% endif %}>Half Day</option>
+                    <option value="leave" {% if status == 'leave' %}selected{% endif %}>On Leave</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100 py-2" id="filter-submit">Apply</button>
+                <a href="{% url 'team_attendance_list' %}" class="btn btn-outline-secondary py-2" id="filter-reset">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Team Table Card -->
+<div class="card border-0 shadow-sm" style="border-radius: 16px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="team-attendance-table">
+                <thead class="table-light">
+                    <tr class="small text-muted text-uppercase">
+                        <th scope="col" class="ps-4">Employee</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Check-In</th>
+                        <th scope="col">Check-Out</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="pe-4 text-end">Working Hours</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for att in attendances %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-2 font-bold" style="width: 32px; height: 32px;">
+                                        {{ att.employee.first_name|default:att.employee.username|slice:":1"|upper }}
+                                    </div>
+                                    <div>
+                                        <span class="font-semibold d-block">{{ att.employee.get_full_name|default:att.employee.username }}</span>
+                                        <span class="text-muted text-xs d-block" style="font-size: 0.75rem;">ID: {{ att.employee.employee_id|default:"—" }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="font-semibold">{{ att.date|date:"d M Y" }}</span></td>
+                            <td>
+                                {% if att.check_in_time %}
+                                    <span>{{ att.check_in_time|time:"h:i A" }}</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if att.check_out_time %}
+                                    <span>{{ att.check_out_time|time:"h:i A" }}</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if att.status == 'present' %}bg-success-subtle text-success{% elif att.status == 'half-day' %}bg-warning-subtle text-warning{% elif att.status == 'absent' %}bg-danger-subtle text-danger{% else %}bg-info-subtle text-info{% endif %} px-2.5 py-1.5" style="border-radius: 8px;">
+                                    {{ att.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="pe-4 text-end font-semibold text-primary">
+                                {% if att.working_hours > 0 %}
+                                    {{ att.working_hours }} hrs
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-people fs-2 mb-3 d-block text-secondary"></i>
+                                <span class="d-block font-semibold">No team attendance records found</span>
+                                <span class="text-xs text-muted">Adjust your search parameters or date filters.</span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+    <nav class="d-flex justify-content-center mt-4">
+        <ul class="pagination shadow-sm" style="border-radius: 10px; overflow: hidden;">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ q }}&start_date={{ start_date }}&end_date={{ end_date }}&status={{ status }}&page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?q={{ q }}&start_date={{ start_date }}&end_date={{ end_date }}&status={{ status }}&page={{ num }}">{{ num }}</a>
+                </li>
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ q }}&start_date={{ start_date }}&end_date={{ end_date }}&status={{ status }}&page={{ page_obj.next_page_number }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}

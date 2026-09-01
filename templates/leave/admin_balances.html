@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Leave Balances - LeaveFlow{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">Employee Leave Balances</h1>
+        <p class="text-muted mb-0">Monitor, search, and adjust annual leave balance allocations for employees.</p>
+    </div>
+    <a href="{% url 'admin_balance_create' %}" class="btn btn-primary shadow-sm" id="btn-create-balance">
+        <i class="bi bi-plus-lg me-2"></i> Allocate Balance
+    </a>
+</div>
+
+<!-- Filters Card -->
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 16px;">
+    <div class="card-body p-4">
+        <form method="get" class="row g-3 align-items-end" id="balances-filter-form">
+            <div class="col-md-3">
+                <label for="q" class="form-label font-semibold small text-uppercase">Employee Search</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" id="q" value="{{ q }}" class="form-control border-start-0 bg-light" placeholder="Search name or ID...">
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="year" class="form-label font-semibold small text-uppercase">Year</label>
+                <input type="number" name="year" id="year" value="{{ selected_year }}" class="form-control bg-light" placeholder="e.g. 2026">
+            </div>
+
+            <div class="col-md-2.5">
+                <label for="department" class="form-label font-semibold small text-uppercase">Department</label>
+                <select name="department" id="department" class="form-select bg-light">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.pk }}" {% if selected_dept == dept.pk|stringformat:"i" %}selected{% endif %}>{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2.5">
+                <label for="leave_type" class="form-label font-semibold small text-uppercase">Leave Type</label>
+                <select name="leave_type" id="leave_type" class="form-select bg-light">
+                    <option value="">All Leave Types</option>
+                    {% for lt in leave_types %}
+                        <option value="{{ lt.pk }}" {% if selected_type == lt.pk|stringformat:"i" %}selected{% endif %}>{{ lt.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100 py-2" id="filter-submit">Apply</button>
+                <a href="{% url 'admin_balances' %}" class="btn btn-outline-secondary py-2" id="filter-reset">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Table Card -->
+<div class="card border-0 shadow-sm" style="border-radius: 16px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="balances-table">
+                <thead class="table-light">
+                    <tr class="small text-muted text-uppercase">
+                        <th scope="col" class="ps-4">Employee</th>
+                        <th scope="col">Department</th>
+                        <th scope="col">Leave Type</th>
+                        <th scope="col">Year</th>
+                        <th scope="col">Total Days</th>
+                        <th scope="col">Used Days</th>
+                        <th scope="col">Remaining Days</th>
+                        <th scope="col" class="pe-4 text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bal in balances %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-2 font-bold" style="width: 32px; height: 32px;">
+                                        {{ bal.employee.first_name|default:bal.employee.username|slice:":1"|upper }}
+                                    </div>
+                                    <div>
+                                        <span class="font-semibold d-block">{{ bal.employee.get_full_name|default:bal.employee.username }}</span>
+                                        <span class="text-muted text-xs d-block" style="font-size: 0.75rem;">Username: {{ bal.employee.username }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ bal.employee.department.name|default:"Unassigned" }}</td>
+                            <td><span class="font-semibold text-dark">{{ bal.leave_type.name }}</span></td>
+                            <td><strong>{{ bal.year }}</strong></td>
+                            <td>{{ bal.total_days }} days</td>
+                            <td>{{ bal.used_days }} days</td>
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary px-2.5 py-1.5 font-bold" style="border-radius: 8px;">
+                                    {{ bal.remaining_days }} days
+                                </span>
+                            </td>
+                            <td class="pe-4 text-end">
+                                <a href="{% url 'admin_balance_update' bal.pk %}" class="btn btn-sm btn-outline-secondary px-3" style="border-radius: 6px;" id="btn-adjust-{{ bal.pk }}">
+                                    <i class="bi bi-sliders me-1"></i> Adjust
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-wallet2 fs-2 mb-3 d-block text-secondary"></i>
+                                <span class="d-block font-semibold">No leave balances found</span>
+                                <span class="text-xs text-muted">Try adjusting search parameters or allocate a new balance.</span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+    <nav class="d-flex justify-content-center mt-4">
+        <ul class="pagination shadow-sm" style="border-radius: 10px; overflow: hidden;">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ q }}&year={{ selected_year }}&department={{ selected_dept }}&leave_type={{ selected_type }}&page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?q={{ q }}&year={{ selected_year }}&department={{ selected_dept }}&leave_type={{ selected_type }}&page={{ num }}">{{ num }}</a>
+                </li>
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ q }}&year={{ selected_year }}&department={{ selected_dept }}&leave_type={{ selected_type }}&page={{ page_obj.next_page_number }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}

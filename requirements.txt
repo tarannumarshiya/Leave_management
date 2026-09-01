@@ -1,0 +1,7 @@
+Django>=5.0,<5.1
+django-environ
+psycopg2-binary
+djangorestframework
+djangorestframework-simplejwt
+django-filter
+drf-spectacular

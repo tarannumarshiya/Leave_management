@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Login - LeaveFlow{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-6 col-lg-5">
+        <div class="card gradient-card border-0 p-4">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-primary-gradient rounded-circle text-white mb-3" style="width: 60px; height: 60px; background: var(--primary-gradient);">
+                        <i class="bi bi-person-lock fs-3"></i>
+                    </div>
+                    <h2 class="h3 mb-1">Welcome Back</h2>
+                    <p class="text-muted">Sign in to your LeaveFlow account</p>
+                </div>
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" style="border-radius: 10px;">
+                        {% for error in form.non_field_errors %}
+                            <p class="mb-0 small"><i class="bi bi-exclamation-circle-fill me-2"></i>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" novalidate id="login-form">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label font-semibold small text-uppercase">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-person"></i></span>
+                            <input type="text" name="username" autofocus maxlength="150" required id="id_username" 
+                                   class="form-control border-start-0 bg-light {% if form.username.errors %}is-invalid{% endif %}" 
+                                   placeholder="Enter your username">
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.username.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_password" class="form-label font-semibold small text-uppercase">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-key"></i></span>
+                            <input type="password" name="password" required id="id_password" 
+                                   class="form-control border-start-0 border-end-0 bg-light {% if form.password.errors %}is-invalid{% endif %}" 
+                                   placeholder="Enter your password">
+                            <button class="btn btn-outline-secondary bg-light border-start-0 text-muted d-flex align-items-center" 
+                                    type="button" id="toggle-password-btn" title="Show or hide password" aria-label="Toggle password visibility">
+                                <i class="bi bi-eye" id="toggle-password-icon"></i>
+                            </button>
+                            {% if form.password.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.password.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-gradient w-100 py-2.5 mb-3" id="submit-login-btn">
+                        Sign In
+                    </button>
+
+                    <div class="text-center mt-3">
+                        <p class="small text-muted mb-0">Don't have an account? 
+                            <a href="{% url 'register' %}" class="text-primary font-semibold text-decoration-none" id="register-link">Register here</a>
+                        </p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const toggleBtn = document.getElementById("toggle-password-btn");
+        const passwordInput = document.getElementById("id_password");
+        const icon = document.getElementById("toggle-password-icon");
+
+        if (toggleBtn && passwordInput && icon) {
+            toggleBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                const isPassword = passwordInput.getAttribute("type") === "password";
+                passwordInput.setAttribute("type", isPassword ? "text" : "password");
+                
+                if (isPassword) {
+                    icon.classList.remove("bi-eye");
+                    icon.classList.add("bi-eye-slash");
+                    toggleBtn.setAttribute("title", "Hide password");
+                } else {
+                    icon.classList.remove("bi-eye-slash");
+                    icon.classList.add("bi-eye");
+                    toggleBtn.setAttribute("title", "Show password");
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

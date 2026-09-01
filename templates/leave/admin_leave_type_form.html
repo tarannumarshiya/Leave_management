@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - LeaveFlow{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'admin_leave_types' %}" class="btn btn-sm btn-outline-secondary mb-3">
+        <i class="bi bi-arrow-left"></i> Back to Leave Types
+    </a>
+    <h1 class="h2 mb-1">{{ title }}</h1>
+    <p class="text-muted mb-0">Configure details for this leave type category.</p>
+</div>
+
+<div class="card border-0 shadow-sm p-4" style="border-radius: 16px; max-width: 600px;">
+    <div class="card-body">
+        <form method="post" id="leave-type-form">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="id_name" class="form-label font-semibold text-sm text-uppercase">Leave Type Name</label>
+                <input type="text" name="name" id="id_name" class="form-control bg-light" required value="{{ form.name.value|default:'' }}" placeholder="e.g. Annual Leave, Sick Leave...">
+                {% if form.name.errors %}
+                    <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-4">
+                <label for="id_max_days_per_year" class="form-label font-semibold text-sm text-uppercase">Maximum Days Per Year</label>
+                <input type="number" name="max_days_per_year" id="id_max_days_per_year" class="form-control bg-light" required value="{{ form.max_days_per_year.value|default:'' }}" placeholder="e.g. 15, 30...">
+                {% if form.max_days_per_year.errors %}
+                    <div class="text-danger small mt-1">{{ form.max_days_per_year.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-gradient px-5 py-2.5 w-100" id="btn-submit-type">
+                Save Leave Type
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

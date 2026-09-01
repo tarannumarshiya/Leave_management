@@ -1,0 +1,517 @@
+{% extends "base.html" %}
+
+{% block title %}LeaveFlow - Modern Leave & Attendance Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero section styles */
+    .hero-section {
+        position: relative;
+        padding: 4.5rem 0 5rem 0;
+        overflow: hidden;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 1rem;
+        border-radius: 9999px;
+        background: rgba(99, 102, 241, 0.1);
+        color: #4f46e5;
+        border: 1px solid rgba(99, 102, 241, 0.25);
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(79, 70, 229, 0.05);
+    }
+
+    .hero-title {
+        font-size: 3.25rem;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -1px;
+        color: #0f172a;
+    }
+
+    .hero-title .gradient-text {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+        font-size: 1.2rem;
+        color: #64748b;
+        line-height: 1.6;
+        max-width: 580px;
+    }
+
+    /* Live interactive mockup */
+    .mockup-window {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 25px 50px -12px rgba(79, 70, 229, 0.18), 0 0 0 1px rgba(226, 232, 240, 0.9);
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .mockup-window:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 30px 60px -15px rgba(79, 70, 229, 0.25), 0 0 0 1px rgba(99, 102, 241, 0.2);
+    }
+
+    .mockup-header {
+        background: #1e293b;
+        padding: 0.9rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .mockup-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+
+    .mockup-dot.red { background-color: #ef4444; }
+    .mockup-dot.yellow { background-color: #f59e0b; }
+    .mockup-dot.green { background-color: #10b981; }
+
+    .mockup-body {
+        padding: 1.75rem;
+        background: #fafafa;
+    }
+
+    /* Feature Cards */
+    .feature-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        padding: 2rem 1.75rem;
+        height: 100%;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 30px -10px rgba(79, 70, 229, 0.12);
+        border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    .feature-icon-wrapper {
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .icon-indigo { background: rgba(79, 70, 229, 0.1); color: #4f46e5; }
+    .icon-emerald { background: rgba(16, 185, 129, 0.1); color: #059669; }
+    .icon-amber { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+    .icon-pink { background: rgba(236, 72, 153, 0.1); color: #db2777; }
+    .icon-cyan { background: rgba(6, 182, 212, 0.1); color: #0891b2; }
+    .icon-purple { background: rgba(147, 51, 234, 0.1); color: #7c3aed; }
+
+    /* Workflow step badges */
+    .step-number {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        color: white;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+    }
+
+    /* Stats strip */
+    .stats-strip {
+        background: #111827;
+        color: white;
+        border-radius: 20px;
+        padding: 2.5rem 1.5rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+
+    .stats-number {
+        font-size: 2.25rem;
+        font-weight: 800;
+        font-family: 'Outfit', sans-serif;
+        background: linear-gradient(135deg, #a78bfa 0%, #38bdf8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* Role card */
+    .role-card {
+        border-radius: 16px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        padding: 2rem;
+        height: 100%;
+        transition: all 0.25s ease;
+    }
+
+    .role-card:hover {
+        border-color: #6366f1;
+        box-shadow: 0 12px 20px -5px rgba(99, 102, 241, 0.1);
+    }
+
+    /* CTA Section */
+    .cta-banner {
+        background: linear-gradient(135deg, #312e81 0%, #4338ca 50%, #6366f1 100%);
+        border-radius: 24px;
+        color: white;
+        padding: 3.5rem 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cta-banner::before {
+        content: '';
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+        top: -100px;
+        right: -80px;
+    }
+
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.35rem;
+        }
+        .hero-section {
+            padding: 2.5rem 0 3rem 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="row align-items-center g-5">
+        <div class="col-lg-6">
+            <div class="hero-badge">
+                <i class="bi bi-stars me-2"></i> Next-Generation Workforce System
+            </div>
+            <h1 class="hero-title mb-3">
+                Smart <span class="gradient-text">Leave & Attendance</span> Management for Modern Teams
+            </h1>
+            <p class="hero-subtitle mb-4">
+                Effortlessly track daily attendance, manage automated leave quotas, streamline manager approvals, and gain complete organizational insights in one unified workspace.
+            </p>
+            
+            <div class="d-flex flex-wrap gap-3 mb-4">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard_redirect' %}" class="btn btn-gradient btn-lg px-4 py-3 shadow-sm d-flex align-items-center" id="hero-dashboard-btn">
+                        <i class="bi bi-speedometer2 me-2"></i> Go to Dashboard
+                    </a>
+                    <a href="{% url 'my_attendance_list' %}" class="btn btn-outline-dark btn-lg px-4 py-3 d-flex align-items-center rounded-3" id="hero-quick-clock-btn">
+                        <i class="bi bi-clock-history me-2"></i> View Attendance
+                    </a>
+                {% else %}
+                    <a href="{% url 'register' %}" class="btn btn-gradient btn-lg px-4 py-3 shadow-sm d-flex align-items-center" id="hero-register-btn">
+                        <i class="bi bi-rocket-takeoff-fill me-2"></i> Get Started Free
+                    </a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-dark btn-lg px-4 py-3 d-flex align-items-center rounded-3" id="hero-login-btn">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> Sign In to Account
+                    </a>
+                {% endif %}
+            </div>
+
+            <div class="d-flex align-items-center gap-4 text-muted small pt-2">
+                <div class="d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-1"></i> 1-Click Clock-In</div>
+                <div class="d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-1"></i> Auto Leave Quotas</div>
+                <div class="d-flex align-items-center"><i class="bi bi-check-circle-fill text-success me-1"></i> RBAC Security</div>
+            </div>
+        </div>
+
+        <!-- Interactive Mockup Preview -->
+        <div class="col-lg-6">
+            <div class="mockup-window">
+                <div class="mockup-header">
+                    <span class="mockup-dot red"></span>
+                    <span class="mockup-dot yellow"></span>
+                    <span class="mockup-dot green"></span>
+                    <span class="text-white-50 ms-2 small font-monospace"><i class="bi bi-shield-check me-1"></i> leaveflow.internal/dashboard</span>
+                </div>
+                <div class="mockup-body">
+                    <!-- Preview Cards Inside Mockup -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <div class="p-3 bg-white rounded-3 border">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-muted small">Today's Status</span>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">Active</span>
+                                </div>
+                                <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-check-circle-fill text-success me-1"></i> Present</h5>
+                                <small class="text-muted" style="font-size: 0.75rem;">Checked in at 09:00 AM</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-white rounded-3 border">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-muted small">Annual Leave</span>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">2026</span>
+                                </div>
+                                <h5 class="mb-0 fw-bold text-dark">18 <span class="fs-6 fw-normal text-muted">/ 24 days left</span></h5>
+                                <small class="text-primary" style="font-size: 0.75rem;">75% available</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mini Leave Request Notification Card -->
+                    <div class="p-3 bg-white rounded-3 border mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="d-flex gap-2">
+                                <div class="bg-indigo text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: rgba(79, 70, 229, 0.1);">
+                                    <i class="bi bi-send-check"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold text-dark small">Casual Leave Application</div>
+                                    <div class="text-muted text-xs" style="font-size: 0.75rem;">3 Days (Next Mon - Wed) • Awaiting Review</div>
+                                </div>
+                            </div>
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill">Pending</span>
+                        </div>
+                    </div>
+
+                    <!-- Mini Live Team Attendance Bar -->
+                    <div class="p-3 bg-white rounded-3 border">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-semibold text-dark small"><i class="bi bi-people me-1 text-primary"></i> Team Presence Today</span>
+                            <span class="text-success fw-bold small">92%</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 12%" aria-valuenow="12" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div class="progress-bar bg-secondary" role="progressbar" style="width: 8%" aria-valuenow="8" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Strip -->
+<section class="my-5">
+    <div class="stats-strip">
+        <div class="row text-center g-4">
+            <div class="col-6 col-md-3">
+                <div class="stats-number">100%</div>
+                <div class="text-white-50 small mt-1">Automated Balances</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stats-number">0s</div>
+                <div class="text-white-50 small mt-1">Manual Attendance Math</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stats-number">3-Tier</div>
+                <div class="text-white-50 small mt-1">Role-Based Access Control</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stats-number">REST API</div>
+                <div class="text-white-50 small mt-1">Ready for Integrations</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Core Features Grid -->
+<section class="py-5">
+    <div class="text-center max-w-xl mx-auto mb-5">
+        <span class="text-primary fw-semibold text-uppercase tracking-wider small">Everything You Need</span>
+        <h2 class="h2 fw-bold text-dark mt-1">Built to Eliminate HR & Administrative Overhead</h2>
+        <p class="text-muted">A full suite of tools designed for employees, team leads, and executives.</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Feature 1 -->
+        <div class="col-md-6 col-lg-4">
+            <div class="feature-card">
+                <div class="feature-icon-wrapper icon-indigo">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <h4 class="h5 fw-bold text-dark mb-2">1-Click Attendance</h4>
+                <p class="text-muted small mb-0">
+                    Employees check in and out with single clicks. Exact timestamps and working hours are computed automatically with zero manual calculation errors.
+                </p>
+            </div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="col-md-6 col-lg-4">
+            <div class="feature-card">
+                <div class="feature-icon-wrapper icon-emerald">
+                    <i class="bi bi-calendar2-check"></i>
+                </div>
+                <h4 class="h5 fw-bold text-dark mb-2">Smart Leave Quotas</h4>
+                <p class="text-muted small mb-0">
+                    Custom leave types (Sick, Casual, Annual) with year-by-year balance tracking. Prevents duplicate dates and rejects applications exceeding available quotas.
+                </p>
+            </div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="col-md-6 col-lg-4">
+            <div class="feature-card">
+                <div class="feature-icon-wrapper icon-amber">
+                    <i class="bi bi-send-check"></i>
+                </div>
+                <h4 class="h5 fw-bold text-dark mb-2">Approval Workflows</h4>
+                <p class="text-muted small mb-0">
+                    Managers receive real-time queues for their department or direct subordinates. Approve or reject with custom feedback notes instantly.
+                </p>
+            </div>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="col-md-6 col-lg-4">
+            <div class="feature-card">
+                <div class="feature-icon-wrapper icon-pink">
+                    <i class="bi bi-diagram-3"></i>
+                </div>
+                <h4 class="h5 fw-bold text-dark mb-2">Automated Signals</h4>
+                <p class="text-muted small mb-0">
+                    Approved leaves trigger automated backend signals that immediately mark the employee's attendance as 'On Leave' and deduct their quota.
+                </p>
+            </div>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="col-md-6 col-lg-4">
+            <div class="feature-card">
+                <div class="feature-icon-wrapper icon-cyan">
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                </div>
+                <h4 class="h5 fw-bold text-dark mb-2">Auditing & CSV Export</h4>
+                <p class="text-muted small mb-0">
+                    Admins can filter records by department, status, or date range, and export clean CSV reports ready for payroll and compliance reporting.
+                </p>
+            </div>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="col-md-6 col-lg-4">
+            <div class="feature-card">
+                <div class="feature-icon-wrapper icon-purple">
+                    <i class="bi bi-shield-lock"></i>
+                </div>
+                <h4 class="h5 fw-bold text-dark mb-2">Granular Role Security</h4>
+                <p class="text-muted small mb-0">
+                    Secure role-based views for Employees, Managers, and Admins backed by Django Mixins and Django REST Framework custom permissions.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Role Breakdown Section -->
+<section class="py-5">
+    <div class="text-center mb-5">
+        <span class="text-primary fw-semibold text-uppercase tracking-wider small">Tailored Workspaces</span>
+        <h2 class="h2 fw-bold text-dark mt-1">Designed for Every Stakeholder</h2>
+    </div>
+
+    <div class="row g-4">
+        <!-- Employee Role -->
+        <div class="col-md-4">
+            <div class="role-card">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary text-white rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <div>
+                        <h4 class="h5 fw-bold mb-0">Employees</h4>
+                        <span class="text-muted small">Self-service portal</span>
+                    </div>
+                </div>
+                <ul class="list-unstyled small text-muted mb-0 d-flex flex-column gap-2">
+                    <li><i class="bi bi-check2 text-primary me-2 fw-bold"></i> Clock in / out with single click</li>
+                    <li><i class="bi bi-check2 text-primary me-2 fw-bold"></i> Submit leave applications with reasons</li>
+                    <li><i class="bi bi-check2 text-primary me-2 fw-bold"></i> View real-time quota balances & history</li>
+                    <li><i class="bi bi-check2 text-primary me-2 fw-bold"></i> Track decision notes from managers</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Manager Role -->
+        <div class="col-md-4">
+            <div class="role-card">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-indigo text-white rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; background: #6366f1;">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <div>
+                        <h4 class="h5 fw-bold mb-0">Team Managers</h4>
+                        <span class="text-muted small">Department leadership</span>
+                    </div>
+                </div>
+                <ul class="list-unstyled small text-muted mb-0 d-flex flex-column gap-2">
+                    <li><i class="bi bi-check2 text-indigo me-2 fw-bold"></i> Dedicated pending approvals queue</li>
+                    <li><i class="bi bi-check2 text-indigo me-2 fw-bold"></i> Approve / reject with manager notes</li>
+                    <li><i class="bi bi-check2 text-indigo me-2 fw-bold"></i> Live team attendance status grid</li>
+                    <li><i class="bi bi-check2 text-indigo me-2 fw-bold"></i> Automatic email signal notifications</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Admin Role -->
+        <div class="col-md-4">
+            <div class="role-card">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-dark text-white rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <div>
+                        <h4 class="h5 fw-bold mb-0">HR & Admins</h4>
+                        <span class="text-muted small">Full organizational control</span>
+                    </div>
+                </div>
+                <ul class="list-unstyled small text-muted mb-0 d-flex flex-column gap-2">
+                    <li><i class="bi bi-check2 text-dark me-2 fw-bold"></i> Department & user hierarchy CRUD</li>
+                    <li><i class="bi bi-check2 text-dark me-2 fw-bold"></i> Configure leave types & adjust quotas</li>
+                    <li><i class="bi bi-check2 text-dark me-2 fw-bold"></i> Org-wide attendance audits</li>
+                    <li><i class="bi bi-check2 text-dark me-2 fw-bold"></i> Payroll-ready CSV export downloads</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Banner -->
+<section class="my-5">
+    <div class="cta-banner text-center">
+        <h2 class="h2 fw-bold mb-3">Ready to Streamline Leave & Attendance?</h2>
+        <p class="text-white-50 max-w-xl mx-auto mb-4" style="max-width: 600px;">
+            Join modern teams managing their workforce seamlessly with automated approvals, live records, and instant analytics.
+        </p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard_redirect' %}" class="btn btn-light btn-lg px-4 py-2.5 fw-semibold text-primary rounded-3" id="cta-dashboard-btn">
+                    Enter Dashboard
+                </a>
+            {% else %}
+                <a href="{% url 'register' %}" class="btn btn-light btn-lg px-4 py-2.5 fw-semibold text-primary rounded-3" id="cta-register-btn">
+                    Create Free Account
+                </a>
+                <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-4 py-2.5 rounded-3" id="cta-login-btn">
+                    Sign In
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

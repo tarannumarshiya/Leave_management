@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block title %}Manager Dashboard - LeaveFlow{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 bg-primary-gradient text-white p-4 shadow-sm" style="border-radius: 16px; background: var(--primary-gradient);">
+            <div class="card-body">
+                <span class="badge bg-white text-primary mb-2 fw-semibold px-3 py-1.5" style="border-radius: 20px;">Manager Panel</span>
+                <h1 class="display-6 font-bold mb-1">Welcome, {{ user.first_name|default:user.username }}!</h1>
+                <p class="mb-0 opacity-85">Department: {{ user.department.name|default:"Unassigned" }} | Role: Manager</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card gradient-card border-0 p-3 shadow-sm" style="border-radius: 16px;">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-uppercase text-muted font-bold small mb-1">Pending Approvals</h6>
+                    <h3 class="display-6 font-black mb-0 text-warning">{{ pending_count }}</h3>
+                </div>
+                <div class="bg-warning bg-opacity-10 text-warning p-3 rounded-3">
+                    <i class="bi bi-patch-question fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card gradient-card border-0 p-3 shadow-sm" style="border-radius: 16px;">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-uppercase text-muted font-bold small mb-1">On Leave Today</h6>
+                    <h3 class="display-6 font-black mb-0 text-info">{{ team_on_leave_today.count }}</h3>
+                </div>
+                <div class="bg-info bg-opacity-10 text-info p-3 rounded-3">
+                    <i class="bi bi-people fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card gradient-card border-0 p-3 shadow-sm" style="border-radius: 16px;">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-uppercase text-muted font-bold small mb-1">Team Members</h6>
+                    <h3 class="display-6 font-black mb-0 text-primary">{{ team_total_count }}</h3>
+                </div>
+                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3">
+                    <i class="bi bi-person-workspace fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Team Attendance Breakdown Section -->
+<div class="row g-4 mb-5">
+    <!-- Chart.js Visualization -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 16px;">
+            <div class="card-body">
+                <h4 class="mb-4 d-flex align-items-center">
+                    <i class="bi bi-pie-chart text-primary me-2"></i>
+                    Team Attendance Status
+                </h4>
+                <div style="position: relative; min-height: 250px;" class="d-flex align-items-center justify-content-center">
+                    <canvas id="teamAttChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Attendance Today Table -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 16px;">
+            <div class="card-body">
+                <h4 class="mb-4 d-flex align-items-center">
+                    <i class="bi bi-card-checklist text-info me-2"></i>
+                    Team Attendance Today
+                </h4>
+                <div class="table-responsive" style="max-height: 260px; overflow-y: auto;">
+                    <table class="table table-borderless align-middle mb-0">
+                        <thead>
+                            <tr class="small text-muted text-uppercase border-bottom">
+                                <th>Employee</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">In</th>
+                                <th class="text-center">Out</th>
+                                <th class="text-end">Hours</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in team_attendance_today %}
+                                <tr class="border-bottom">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-2 font-bold" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                                                {{ item.employee.first_name|default:item.employee.username|slice:":1"|upper }}
+                                            </div>
+                                            <div>
+                                                <span class="font-semibold block text-sm">{{ item.employee.get_full_name|default:item.employee.username }}</span>
+                                                <span class="text-muted text-xs d-block" style="font-size: 0.75rem;">ID: {{ item.employee.employee_id|default:"—" }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if item.attendance %}
+                                            <span class="badge {% if item.attendance.status == 'present' %}bg-success-subtle text-success{% elif item.attendance.status == 'half-day' %}bg-warning-subtle text-warning{% elif item.attendance.status == 'leave' %}bg-info-subtle text-info{% else %}bg-danger-subtle text-danger{% endif %} px-2.5 py-1.5" style="border-radius: 6px; font-size: 0.75rem;">
+                                                {{ item.attendance.get_status_display }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary-subtle text-secondary px-2.5 py-1.5" style="border-radius: 6px; font-size: 0.75rem;">
+                                                Not Checked In
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center text-muted small">
+                                        {{ item.attendance.check_in_time|time:"h:i A"|default:"—" }}
+                                    </td>
+                                    <td class="text-center text-muted small">
+                                        {{ item.attendance.check_out_time|time:"h:i A"|default:"—" }}
+                                    </td>
+                                    <td class="text-end text-muted font-semibold text-sm">
+                                        {% if item.attendance and item.attendance.working_hours > 0 %}
+                                            {{ item.attendance.working_hours }} hrs
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">No team members assigned yet.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Approvals & Quick Actions -->
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+            <div class="card-body">
+                <h4 class="mb-4 d-flex align-items-center">
+                    <i class="bi bi-clock-history text-warning me-2"></i>
+                    Pending Team Leave Requests
+                </h4>
+                <div class="table-responsive">
+                    <table class="table align-middle table-borderless">
+                        <thead class="table-light">
+                            <tr class="small text-muted text-uppercase">
+                                <th scope="col">Employee</th>
+                                <th scope="col">Leave Type</th>
+                                <th scope="col">Dates</th>
+                                <th scope="col">Days</th>
+                                <th scope="col" class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for req in pending_leaves %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-2 font-bold" style="width: 32px; height: 32px;">
+                                                {{ req.employee.first_name|default:req.employee.username|slice:":1"|upper }}
+                                            </div>
+                                            <div>
+                                                <span class="font-semibold block">{{ req.employee.get_full_name|default:req.employee.username }}</span>
+                                                <span class="text-muted text-xs d-block" style="font-size: 0.75rem;">ID: {{ req.employee.employee_id|default:"—" }}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ req.leave_type.name }}</td>
+                                    <td>{{ req.start_date|date:"M d" }} - {{ req.end_date|date:"M d" }}</td>
+                                    <td>{{ req.duration_days }} days</td>
+                                    <td class="text-end">
+                                        <div class="d-flex justify-content-end gap-1">
+                                            <form action="{% url 'leave_decision' req.pk %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="approved">
+                                                <button type="submit" class="btn btn-sm btn-success px-2.5" style="border-radius: 6px;" id="btn-approve-{{ req.pk }}"><i class="bi bi-check"></i> Approve</button>
+                                            </form>
+                                            <form action="{% url 'leave_decision' req.pk %}" method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="status" value="rejected">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger px-2.5" style="border-radius: 6px;" id="btn-reject-{{ req.pk }}"><i class="bi bi-x"></i> Reject</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        <i class="bi bi-patch-check fs-2 mb-3 d-block text-success"></i>
+                                        <span class="d-block font-semibold">All caught up!</span>
+                                        <span class="text-xs text-muted">No pending leave requests to process.</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team On-Leave Today Card -->
+        <div class="card border-0 shadow-sm p-4 mt-4" style="border-radius: 16px;">
+            <div class="card-body">
+                <h4 class="mb-3 d-flex align-items-center">
+                    <i class="bi bi-person-slash text-info me-2"></i>
+                    Team On-Leave Today
+                </h4>
+                <div class="list-group list-group-flush">
+                    {% for att in team_on_leave_today %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center me-2 font-bold" style="width: 32px; height: 32px;">
+                                    {{ att.employee.first_name|default:att.employee.username|slice:":1"|upper }}
+                                </div>
+                                <span class="font-semibold small">{{ att.employee.get_full_name|default:att.employee.username }}</span>
+                            </div>
+                            <span class="badge bg-info-subtle text-info">On Leave</span>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-people fs-3 mb-2 d-block text-secondary"></i>
+                            <span class="text-sm font-semibold d-block">No team members on leave today.</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Attendance Widget -->
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
+            <div class="card-body">
+                <h4 class="mb-3 d-flex align-items-center">
+                    <i class="bi bi-clock-history text-primary me-2"></i>
+                    Today's Attendance
+                </h4>
+                
+                <!-- Live Clock -->
+                <div class="text-center bg-light rounded-3 py-3 mb-3 border">
+                    <div class="h2 mb-0 font-black text-primary" id="live-clock">00:00:00 AM</div>
+                    <div class="text-muted small">{% now "D, d M Y" %}</div>
+                </div>
+
+                <div class="text-center">
+                    {% if not today_attendance %}
+                        <p class="text-muted small mb-3">You have not recorded attendance today.</p>
+                        <form action="{% url 'attendance_check_in_out' %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="check_in">
+                            <button type="submit" class="btn btn-gradient w-100 py-2.5" id="btn-checkin">
+                                <i class="bi bi-box-arrow-in-right me-2"></i> Check In
+                            </button>
+                        </form>
+                    {% elif not today_attendance.check_out_time %}
+                        <div class="alert alert-info py-2 small mb-3 border-0" style="border-radius: 10px;">
+                            Checked In: <strong id="checkin-time-val">{{ today_attendance.check_in_time|time:"h:i A" }}</strong>
+                        </div>
+                        <form action="{% url 'attendance_check_in_out' %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="check_out">
+                            <button type="submit" class="btn btn-warning text-white w-100 py-2.5" id="btn-checkout">
+                                <i class="bi bi-box-arrow-left me-2"></i> Check Out
+                            </button>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-success py-2 small mb-2 border-0" style="border-radius: 10px;">
+                            <i class="bi bi-check-circle-fill me-1"></i> Checked Out for Today
+                        </div>
+                        <div class="list-group list-group-flush mb-0 small text-start">
+                            <div class="list-group-item d-flex justify-content-between px-0">
+                                <span class="text-muted">In:</span>
+                                <span>{{ today_attendance.check_in_time|time:"h:i A" }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between px-0">
+                                <span class="text-muted">Out:</span>
+                                <span>{{ today_attendance.check_out_time|time:"h:i A" }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between px-0">
+                                <span class="text-muted">Working Hours:</span>
+                                <strong class="text-primary">{{ today_attendance.working_hours }} hrs</strong>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
+            <div class="card-body">
+                <h4 class="mb-4 d-flex align-items-center">
+                    <i class="bi bi-lightning-charge text-primary me-2"></i>
+                    Quick Actions
+                </h4>
+                <div class="d-grid gap-3">
+                    <a href="#" class="btn btn-gradient py-2.5" id="action-team-leaves">
+                        <i class="bi bi-calendar3 me-2"></i> Team Calendar
+                    </a>
+                    <a href="{% url 'team_attendance_list' %}" class="btn btn-outline-primary py-2.5" id="action-team-attendance">
+                        <i class="bi bi-card-checklist me-2"></i> Manage Team Attendance
+                    </a>
+                    <a href="{% url 'my_attendance_list' %}" class="btn btn-outline-secondary py-2.5" id="action-my-attendance">
+                        <i class="bi bi-person-lines-fill me-2"></i> My Personal Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Live Clock Script -->
+    <script>
+        function updateClock() {
+            const clockEl = document.getElementById('live-clock');
+            if (!clockEl) return;
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            const strTime = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+            clockEl.textContent = strTime;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+
+    {{ attendance_labels|json_script:"attendance-labels-data" }}
+    {{ attendance_counts|json_script:"attendance-counts-data" }}
+
+    <!-- Team Attendance Chart Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const labels = JSON.parse(document.getElementById('attendance-labels-data').textContent);
+            const counts = JSON.parse(document.getElementById('attendance-counts-data').textContent);
+            
+            // Render doughnut chart only if there is team data
+            const ctx = document.getElementById('teamAttChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.85)', // Present
+                            'rgba(245, 158, 11, 0.85)',  // Half Day
+                            'rgba(59, 130, 246, 0.85)',  // On Leave
+                            'rgba(239, 68, 68, 0.85)',   // Absent
+                            'rgba(156, 163, 175, 0.85)'  // Not Checked In
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        });
+    </script>
+</div>
+{% endblock %}

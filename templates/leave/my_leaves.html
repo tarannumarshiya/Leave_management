@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}My Leaves - LeaveFlow{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">My Leave Applications</h1>
+        <p class="text-muted mb-0">Monitor your allocations and past request submissions.</p>
+    </div>
+    <a href="{% url 'leave_apply' %}" class="btn btn-primary shadow-sm" id="btn-request-leave">
+        <i class="bi bi-plus-lg me-2"></i> Request Leave
+    </a>
+</div>
+
+<!-- Balance Summary Grid -->
+<div class="row g-4 mb-4">
+    {% for bal in balances %}
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 16px;">
+                <div class="card-body p-0">
+                    <h6 class="text-uppercase text-muted font-bold small mb-2">{{ bal.leave_type.name }}</h6>
+                    <div class="d-flex align-items-baseline mb-2">
+                        <h3 class="display-6 font-black mb-0 text-primary">{{ bal.remaining_days }}</h3>
+                        <span class="text-muted ms-2">/ {{ bal.total_days }} days remaining</span>
+                    </div>
+                    <div class="progress mb-2" style="height: 6px; border-radius: 3px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: {% widthratio bal.remaining_days bal.total_days 100 %}%"></div>
+                    </div>
+                    <div class="text-muted small">Year: {{ bal.year }} | Used: {{ bal.used_days }} days</div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info border-0 py-3" style="border-radius: 12px;">
+                <i class="bi bi-info-circle-fill me-2"></i> No active leave balances allocated for year {{ current_year }}. Balances initialize automatically upon your first request.
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Requests Table Card -->
+<div class="card border-0 shadow-sm" style="border-radius: 16px;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="my-leaves-table">
+                <thead class="table-light">
+                    <tr class="small text-muted text-uppercase">
+                        <th scope="col" class="ps-4">Leave Type</th>
+                        <th scope="col">Duration Dates</th>
+                        <th scope="col">Total Days</th>
+                        <th scope="col">Reason</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="pe-4">Decision details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in leave_requests %}
+                        <tr>
+                            <td class="ps-4 font-semibold">{{ req.leave_type.name }}</td>
+                            <td>
+                                <span class="text-dark">{{ req.start_date|date:"d M Y" }}</span>
+                                <span class="text-muted mx-1">to</span>
+                                <span class="text-dark">{{ req.end_date|date:"d M Y" }}</span>
+                                <span class="text-muted text-xs d-block" style="font-size: 0.75rem;">Applied: {{ req.applied_on|date:"d M Y, h:i A" }}</span>
+                            </td>
+                            <td><strong class="text-primary">{{ req.duration_days }} days</strong></td>
+                            <td style="max-width: 200px;" class="text-truncate" title="{{ req.reason }}">{{ req.reason }}</td>
+                            <td>
+                                <span class="badge {% if req.status == 'approved' %}bg-success-subtle text-success{% elif req.status == 'pending' %}bg-warning-subtle text-warning{% else %}bg-danger-subtle text-danger{% endif %} px-2.5 py-1.5" style="border-radius: 8px;">
+                                    {{ req.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="pe-4">
+                                {% if req.status == 'approved' %}
+                                    <div class="small">
+                                        <span class="text-muted">Approved by:</span> {{ req.approved_by.get_full_name|default:req.approved_by.username }}
+                                        {% if req.decision_note %}
+                                            <span class="text-muted d-block text-xs italic">"{{ req.decision_note }}"</span>
+                                        {% endif %}
+                                    </div>
+                                {% elif req.status == 'rejected' %}
+                                    <div class="small">
+                                        <span class="text-muted">Rejected by:</span> {{ req.approved_by.get_full_name|default:req.approved_by.username }}
+                                        {% if req.decision_note %}
+                                            <span class="text-danger d-block text-xs italic">"{{ req.decision_note }}"</span>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted text-xs">Awaiting decision</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="bi bi-calendar-x fs-1 mb-2 d-block"></i>
+                                You haven't submitted any leave requests yet.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+    <nav class="d-flex justify-content-center mt-4">
+        <ul class="pagination shadow-sm" style="border-radius: 10px; overflow: hidden;">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}

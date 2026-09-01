@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Dashboard - LeaveFlow{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 bg-primary-gradient text-white p-4 shadow-sm" style="border-radius: 16px; background: var(--primary-gradient);">
+            <div class="card-body">
+                <span class="badge bg-white text-primary mb-2 fw-semibold px-3 py-1.5" style="border-radius: 20px;">Employee Panel</span>
+                <h1 class="display-6 font-bold mb-1">Welcome, {{ user.first_name|default:user.username }}!</h1>
+                <p class="mb-0 opacity-85">Department: {{ user.department.name|default:"Unassigned" }} | Role: Employee</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-4 mb-5">
+    {% with total_rem=0 total_used=0 %}
+    <div class="col-md-4">
+        <div class="card gradient-card border-0 p-3 shadow-sm" style="border-radius: 16px;">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-uppercase text-muted font-bold small mb-1">Leave Balances</h6>
+                    <h3 class="display-6 font-black mb-0 text-primary">{{ balances.count }} Types</h3>
+                </div>
+                <div class="bg-primary bg-opacity-10 text-primary p-3 rounded-3">
+                    <i class="bi bi-wallet2 fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card gradient-card border-0 p-3 shadow-sm" style="border-radius: 16px;">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-uppercase text-muted font-bold small mb-1">Recent Requests</h6>
+                    <h3 class="display-6 font-black mb-0 text-dark">{{ recent_leaves.count }}</h3>
+                </div>
+                <div class="bg-info bg-opacity-10 text-info p-3 rounded-3">
+                    <i class="bi bi-file-earmark-text fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card gradient-card border-0 p-3 shadow-sm" style="border-radius: 16px;">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="text-uppercase text-muted font-bold small mb-1">Status Today</h6>
+                    <h3 class="h4 font-black mb-0 text-success">
+                        {% if today_attendance %}
+                            {{ today_attendance.get_status_display }}
+                        {% else %}
+                            Not Checked In
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="bg-success bg-opacity-10 text-success p-3 rounded-3">
+                    <i class="bi bi-person-check fs-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endwith %}
+</div>
+
+<!-- Leave Balance Breakdown Section -->
+<div class="row g-4 mb-5">
+    <!-- Chart.js Visualization -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 16px;">
+            <div class="card-body">
+                <h4 class="mb-4 d-flex align-items-center">
+                    <i class="bi bi-bar-chart-line text-primary me-2"></i>
+                    Leave Balance Breakdown
+                </h4>
+                <div style="position: relative; min-height: 250px;">
+                    <canvas id="balanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Balance Table Summary -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 16px;">
+            <div class="card-body">
+                <h4 class="mb-4 d-flex align-items-center">
+                    <i class="bi bi-wallet2 text-info me-2"></i>
+                    Balance Details
+                </h4>
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle mb-0">
+                        <thead>
+                            <tr class="small text-muted text-uppercase border-bottom">
+                                <th>Type</th>
+                                <th class="text-center">Used</th>
+                                <th class="text-center">Remaining</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bal in balances %}
+                                <tr class="border-bottom">
+                                    <td>
+                                        <span class="font-semibold text-dark">{{ bal.leave_type.name }}</span>
+                                    </td>
+                                    <td class="text-center text-muted">{{ bal.used_days }} d</td>
+                                    <td class="text-center">
+                                        <span class="badge {% if bal.remaining_days > 3 %}bg-success-subtle text-success{% else %}bg-warning-subtle text-warning{% endif %} px-2.5 py-1.5" style="border-radius: 6px;">
+                                            {{ bal.remaining_days }} d
+                                        </span>
+                                    </td>
+                                    <td class="text-end font-bold text-primary">{{ bal.total_days }} d</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">No leave balances allocated yet.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Details & Quick Actions -->
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+            <div class="card-body">
+                <h4 class="mb-4 d-flex align-items-center">
+                    <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                    Recent Leave Applications
+                </h4>
+                <div class="table-responsive">
+                    <table class="table align-middle table-borderless">
+                        <thead class="table-light">
+                            <tr class="small text-muted text-uppercase">
+                                <th scope="col">Leave Type</th>
+                                <th scope="col">Start Date</th>
+                                <th scope="col">End Date</th>
+                                <th scope="col">Days</th>
+                                <th scope="col">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for leave in recent_leaves %}
+                                <tr>
+                                    <td><span class="font-semibold">{{ leave.leave_type.name }}</span></td>
+                                    <td>{{ leave.start_date|date:"M d, Y" }}</td>
+                                    <td>{{ leave.end_date|date:"M d, Y" }}</td>
+                                    <td>{{ leave.duration_days }} days</td>
+                                    <td>
+                                        <span class="badge {% if leave.status == 'approved' %}bg-success-subtle text-success{% elif leave.status == 'pending' %}bg-warning-subtle text-warning{% else %}bg-danger-subtle text-danger{% endif %} px-2.5 py-1.5" style="border-radius: 8px;">
+                                            {{ leave.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-5 text-muted">
+                                        <i class="bi bi-inbox fs-2 mb-3 d-block text-secondary"></i>
+                                        <span class="d-block font-semibold">No recent leave requests found.</span>
+                                        <span class="text-xs text-muted">When you submit leave requests, they will appear here.</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <!-- Attendance Widget -->
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
+            <div class="card-body">
+                <h4 class="mb-3 d-flex align-items-center">
+                    <i class="bi bi-clock-history text-primary me-2"></i>
+                    Today's Attendance
+                </h4>
+                
+                <!-- Live Clock -->
+                <div class="text-center bg-light rounded-3 py-3 mb-3 border">
+                    <div class="h2 mb-0 font-black text-primary" id="live-clock">00:00:00 AM</div>
+                    <div class="text-muted small">{% now "D, d M Y" %}</div>
+                </div>
+
+                <div class="text-center">
+                    {% if not today_attendance %}
+                        <p class="text-muted small mb-3">You have not recorded attendance today.</p>
+                        <form action="{% url 'attendance_check_in_out' %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="check_in">
+                            <button type="submit" class="btn btn-gradient w-100 py-2.5" id="btn-checkin">
+                                <i class="bi bi-box-arrow-in-right me-2"></i> Check In
+                            </button>
+                        </form>
+                    {% elif not today_attendance.check_out_time %}
+                        <div class="alert alert-info py-2 small mb-3 border-0" style="border-radius: 10px;">
+                            Checked In: <strong id="checkin-time-val">{{ today_attendance.check_in_time|time:"h:i A" }}</strong>
+                        </div>
+                        <form action="{% url 'attendance_check_in_out' %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="check_out">
+                            <button type="submit" class="btn btn-warning text-white w-100 py-2.5" id="btn-checkout">
+                                <i class="bi bi-box-arrow-left me-2"></i> Check Out
+                            </button>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-success py-2 small mb-2 border-0" style="border-radius: 10px;">
+                            <i class="bi bi-check-circle-fill me-1"></i> Checked Out for Today
+                        </div>
+                        <div class="list-group list-group-flush mb-0 small text-start">
+                            <div class="list-group-item d-flex justify-content-between px-0">
+                                <span class="text-muted">In:</span>
+                                <span>{{ today_attendance.check_in_time|time:"h:i A" }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between px-0">
+                                <span class="text-muted">Out:</span>
+                                <span>{{ today_attendance.check_out_time|time:"h:i A" }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between px-0">
+                                <span class="text-muted">Working Hours:</span>
+                                <strong class="text-primary">{{ today_attendance.working_hours }} hrs</strong>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
+            <div class="card-body">
+                <h4 class="mb-4 d-flex align-items-center">
+                    <i class="bi bi-lightning-charge text-primary me-2"></i>
+                    Quick Actions
+                </h4>
+                <div class="d-grid gap-3">
+                    <a href="{% url 'leave_apply' %}" class="btn btn-gradient py-2.5" id="action-req-leave">
+                        <i class="bi bi-plus-lg me-2"></i> Request Leave
+                    </a>
+                    <a href="{% url 'my_attendance_list' %}" class="btn btn-outline-secondary py-2.5" id="action-attendance">
+                        <i class="bi bi-calendar3 me-2"></i> View Attendance History
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+            <div class="card-body">
+                <h5 class="mb-3 d-flex align-items-center">
+                    <i class="bi bi-info-circle text-muted me-2"></i>
+                    My Info
+                </h5>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2 d-flex justify-content-between">
+                        <span class="text-muted">Username:</span>
+                        <span class="font-semibold">{{ user.username }}</span>
+                    </li>
+                    <li class="mb-2 d-flex justify-content-between">
+                        <span class="text-muted">Email:</span>
+                        <span class="font-semibold">{{ user.email|default:"N/A" }}</span>
+                    </li>
+                    <li class="d-flex justify-content-between">
+                        <span class="text-muted">Joined:</span>
+                        <span class="font-semibold">{{ user.date_joined|date:"M Y" }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Live Clock Script -->
+    <script>
+        function updateClock() {
+            const clockEl = document.getElementById('live-clock');
+            if (!clockEl) return;
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // the hour '0' should be '12'
+            const strTime = `${String(hours).padStart(2, '0')}:${minutes}:${seconds} ${ampm}`;
+            clockEl.textContent = strTime;
+        }
+        setInterval(updateClock, 1000);
+        updateClock(); // Initial run
+    </script>
+
+    {{ balance_labels|json_script:"balance-labels-data" }}
+    {{ balance_remaining|json_script:"balance-remaining-data" }}
+    {{ balance_used|json_script:"balance-used-data" }}
+
+    <!-- Leave Balance Chart Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const labels = JSON.parse(document.getElementById('balance-labels-data').textContent);
+            const remaining = JSON.parse(document.getElementById('balance-remaining-data').textContent);
+            const used = JSON.parse(document.getElementById('balance-used-data').textContent);
+            
+            const ctx = document.getElementById('balanceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Remaining Days',
+                            data: remaining,
+                            backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        },
+                        {
+                            label: 'Used Days',
+                            data: used,
+                            backgroundColor: 'rgba(239, 68, 68, 0.85)',
+                            borderColor: '#ef4444',
+                            borderWidth: 1,
+                            borderRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        },
+                        y: {
+                            stacked: true
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        });
+    </script>
+</div>
+{% endblock %}
